@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (c) Jarkko Sakkinen 2025
+
+set -e
+
+SOURCE="git://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd.git"
+
+if [[ $# -ne 2 ]]; then
+  echo "Usage: $0 <tag> <mustache template>"
+  exit 1
+fi
+
+tag="$1"
+template="$2"
+
+if git rev-parse "$tag" >/dev/null 2>&1; then
+  echo "\"$tag\" pre-exists"
+  exit 1
+fi
+
+if git ls-remote --tags origin | grep -q "refs/tags/$tag"; then
+  echo "\"origin/$tag\" pre-exists"
+  exit 1
+fi
+
+git tag -s "$tag"
+git push origin "$tag"
+
+printf "Waiting for '%s'" "$tag" >&2
+while ! git ls-remote --tags "$SOURCE" | grep -q "refs/tags/${tag}$"; do
+  printf "." >&2
+  sleep 1
+done
+printf " found\n" >&2
+
+pull_request=$(git request-pull mainline/master "$SOURCE" "$tag")
+sender="$(git config user.email)"
+timestamp=$(date +"%a %b %e %H:%M:%S %Y")
+
+jq \
+  --rawfile template "$template" \
+  --arg tag "$tag" \
+  --arg pull_request "$pull_request" \
+  --arg sender "$sender" \
+  --arg timestamp "$timestamp" \
+  -rn '
+    $template
+    | sub("{{sender}}"; $sender)
+    | sub("{{timestamp}}"; $timestamp)
+    | sub("{{tag}}"; $tag)
+    | sub("{{pull_request}}"; $pull_request)
+  ' > "git-pull-${tag}.mbox"
