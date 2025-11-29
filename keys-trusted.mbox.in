@@ -1,0 +1,12 @@
+From {{sender}} {{timestamp}}
+X-Mailer: aerc {{version}}
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: David Howells <dhowells@redhat.com>,
+	James Bottomley <James.Bottomley@HansenPartnership.com>
+	Mimi Zohar <zohar@linux.ibm.com>,
+	keyrings@vger.kernel.org,
+	linux-integrity@vger.kernel.org,
+	linux-security-module@vger.kernel.org
+Subject: [GIT PULL] KEYS: trusted: {{tag}}
+
+{{pull_request}}
