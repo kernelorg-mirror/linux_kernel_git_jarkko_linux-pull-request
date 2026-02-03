@@ -1,5 +1,5 @@
 From {{sender}} {{timestamp}}
-X-Mailer: aerc {{version}}
+From: {{sender}}
 To: Linus Torvalds <torvalds@linux-foundation.org>
 Cc: David Howells <dhowells@redhat.com>,
 	James Bottomley <James.Bottomley@HansenPartnership.com>

@@ -46,7 +46,7 @@ jq \
   --arg timestamp "$timestamp" \
   -rn '
     $template
-    | sub("{{sender}}"; $sender)
+    | gsub("{{sender}}"; $sender)
     | sub("{{timestamp}}"; $timestamp)
     | sub("{{tag}}"; $tag)
     | sub("{{pull_request}}"; $pull_request)
