@@ -2,7 +2,7 @@ From {{sender}} {{timestamp}}
 From: {{sender}}
 To: Linus Torvalds <torvalds@linux-foundation.org>
 Cc: David Howells <dhowells@redhat.com>,
-	James Bottomley <James.Bottomley@HansenPartnership.com>
+	James Bottomley <James.Bottomley@HansenPartnership.com>,
 	Mimi Zohar <zohar@linux.ibm.com>,
 	keyrings@vger.kernel.org,
 	linux-integrity@vger.kernel.org,
