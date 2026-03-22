@@ -57,13 +57,14 @@ fi
 
 tag="$1"
 template="$2"
+tag_ref="refs/tags/$tag"
 
-if git_kernel rev-parse "$tag" >/dev/null 2>&1; then
+if git_kernel show-ref --verify --quiet "$tag_ref"; then
   echo "\"$tag\" pre-exists"
   exit 1
 fi
 
-if git_kernel ls-remote --tags origin | grep -q "refs/tags/$tag"; then
+if git_kernel ls-remote --exit-code --refs --tags origin "$tag_ref" >/dev/null 2>&1; then
   echo "\"origin/$tag\" pre-exists"
   exit 1
 fi
@@ -72,7 +73,7 @@ git_kernel tag -s "$tag"
 git_kernel push origin "$tag"
 
 printf "Waiting for '%s'" "$tag" >&2
-while ! git ls-remote --tags "$SOURCE" | grep -q "refs/tags/${tag}$"; do
+while ! git ls-remote --exit-code --refs --tags "$SOURCE" "$tag_ref" >/dev/null 2>&1; do
   printf "." >&2
   sleep 1
 done
