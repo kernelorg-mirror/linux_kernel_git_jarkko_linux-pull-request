@@ -81,6 +81,10 @@ printf " found\n" >&2
 pull_request=$(git_kernel request-pull mainline/master "$SOURCE" "$tag")
 sender="$(git_kernel config user.email)"
 timestamp=$(date +"%a %b %e %H:%M:%S %Y")
+output="git-pull-${tag}.mbox"
+tmp_output="$(mktemp "${output}.XXXXXX")"
+
+trap 'rm -f "$tmp_output"' EXIT
 
 jq \
   --rawfile template "$template" \
@@ -94,4 +98,12 @@ jq \
     | sub("{{timestamp}}"; $timestamp)
     | sub("{{tag}}"; $tag)
     | sub("{{pull_request}}"; $pull_request)
-  ' > "git-pull-${tag}.mbox"
+  ' > "$tmp_output"
+
+if grep -Eq '\{\{[^}]+\}\}' "$tmp_output"; then
+  echo "\"$template\" contains unresolved placeholders" >&2
+  exit 1
+fi
+
+mv "$tmp_output" "$output"
+trap - EXIT
