@@ -7,7 +7,7 @@ set -e
 SOURCE="git://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd.git"
 
 usage() {
-  echo "Usage: $0 -C <linux kernel tree> <tag> <mustache template>"
+  echo "Usage: $0 [-n|--dry-run] -C <linux kernel tree> <tag> <mustache template>"
 }
 
 git_kernel() {
@@ -15,9 +15,14 @@ git_kernel() {
 }
 
 kernel_tree=
+dry_run=
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -n|--dry-run)
+      dry_run=1
+      shift
+      ;;
     -C|--kernel-tree)
       if [[ $# -lt 2 ]]; then
         usage >&2
@@ -69,17 +74,24 @@ if git_kernel ls-remote --exit-code --refs --tags origin "$tag_ref" >/dev/null 2
   exit 1
 fi
 
-git_kernel tag -s "$tag"
-git_kernel push origin "$tag"
+request_ref="$tag"
 
-printf "Waiting for '%s'" "$tag" >&2
-while ! git ls-remote --exit-code --refs --tags "$SOURCE" "$tag_ref" >/dev/null 2>&1; do
-  printf "." >&2
-  sleep 1
-done
-printf " found\n" >&2
+if [[ -n "$dry_run" ]]; then
+  request_ref=HEAD
+  printf "Dry run: using '%s' as request-pull end ref\n" "$request_ref" >&2
+else
+  git_kernel tag -s "$tag"
+  git_kernel push origin "$tag"
 
-pull_request=$(git_kernel request-pull mainline/master "$SOURCE" "$tag")
+  printf "Waiting for '%s'" "$tag" >&2
+  while ! git ls-remote --exit-code --refs --tags "$SOURCE" "$tag_ref" >/dev/null 2>&1; do
+    printf "." >&2
+    sleep 1
+  done
+  printf " found\n" >&2
+fi
+
+pull_request=$(git_kernel request-pull mainline/master "$SOURCE" "$request_ref")
 sender="$(git_kernel config user.email)"
 timestamp=$(date +"%a %b %e %H:%M:%S %Y")
 output="git-pull-${tag}.mbox"
