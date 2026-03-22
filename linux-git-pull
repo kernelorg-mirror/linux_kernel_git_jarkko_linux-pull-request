@@ -6,26 +6,70 @@ set -e
 
 SOURCE="git://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd.git"
 
-if [[ $# -ne 2 ]]; then
-  echo "Usage: $0 <tag> <mustache template>"
+usage() {
+  echo "Usage: $0 -C <linux kernel tree> <tag> <mustache template>"
+}
+
+git_kernel() {
+  git -C "$kernel_tree" "$@"
+}
+
+kernel_tree=
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -C|--kernel-tree)
+      if [[ $# -lt 2 ]]; then
+        usage >&2
+        exit 1
+      fi
+      kernel_tree="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if [[ -z "$kernel_tree" || $# -ne 2 ]]; then
+  usage >&2
+  exit 1
+fi
+
+if ! git -C "$kernel_tree" rev-parse --show-toplevel >/dev/null 2>&1; then
+  echo "\"$kernel_tree\" is not a git repository" >&2
   exit 1
 fi
 
 tag="$1"
 template="$2"
 
-if git rev-parse "$tag" >/dev/null 2>&1; then
+if git_kernel rev-parse "$tag" >/dev/null 2>&1; then
   echo "\"$tag\" pre-exists"
   exit 1
 fi
 
-if git ls-remote --tags origin | grep -q "refs/tags/$tag"; then
+if git_kernel ls-remote --tags origin | grep -q "refs/tags/$tag"; then
   echo "\"origin/$tag\" pre-exists"
   exit 1
 fi
 
-git tag -s "$tag"
-git push origin "$tag"
+git_kernel tag -s "$tag"
+git_kernel push origin "$tag"
 
 printf "Waiting for '%s'" "$tag" >&2
 while ! git ls-remote --tags "$SOURCE" | grep -q "refs/tags/${tag}$"; do
@@ -34,8 +78,8 @@ while ! git ls-remote --tags "$SOURCE" | grep -q "refs/tags/${tag}$"; do
 done
 printf " found\n" >&2
 
-pull_request=$(git request-pull mainline/master "$SOURCE" "$tag")
-sender="$(git config user.email)"
+pull_request=$(git_kernel request-pull mainline/master "$SOURCE" "$tag")
+sender="$(git_kernel config user.email)"
 timestamp=$(date +"%a %b %e %H:%M:%S %Y")
 
 jq \
