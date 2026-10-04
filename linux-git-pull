@@ -7,7 +7,7 @@ set -e
 SOURCE="git://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd.git"
 
 usage() {
-  echo "Usage: $0 [-n|--dry-run] -C <linux kernel tree> <tag> <mustache template>"
+  echo "Usage: $0 [-n|--dry-run] -C <linux kernel tree> <tag prefix> <version> <mustache template>"
 }
 
 git_kernel() {
@@ -50,7 +50,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$kernel_tree" || $# -ne 2 ]]; then
+if [[ -z "$kernel_tree" || $# -ne 3 ]]; then
   usage >&2
   exit 1
 fi
@@ -60,8 +60,10 @@ if ! git -C "$kernel_tree" rev-parse --show-toplevel >/dev/null 2>&1; then
   exit 1
 fi
 
-tag="$1"
-template="$2"
+tag_prefix="$1"
+version="$2"
+template="$3"
+tag="${tag_prefix}-${version}"
 tag_ref="refs/tags/$tag"
 
 if git_kernel show-ref --verify --quiet "$tag_ref"; then
