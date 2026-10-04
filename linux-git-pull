@@ -74,12 +74,15 @@ if git_kernel ls-remote --exit-code --refs --tags origin "$tag_ref" >/dev/null 2
   exit 1
 fi
 
-request_ref="$tag"
-
 if [[ -n "$dry_run" ]]; then
-  request_ref=HEAD
+  request_ref="HEAD:$tag_ref"
   printf "Dry run: using '%s' as request-pull end ref\n" "$request_ref" >&2
+  pull_request=$(git_kernel request-pull mainline/master "$SOURCE" "$request_ref" 2>/dev/null) || true
+  if [[ -z "$pull_request" ]]; then
+    git_kernel request-pull mainline/master "$SOURCE" "$request_ref" >/dev/null
+  fi
 else
+  request_ref="$tag"
   git_kernel tag -s "$tag"
   git_kernel push origin "$tag"
 
@@ -89,9 +92,9 @@ else
     sleep 1
   done
   printf " found\n" >&2
-fi
 
-pull_request=$(git_kernel request-pull mainline/master "$SOURCE" "$request_ref")
+  pull_request=$(git_kernel request-pull mainline/master "$SOURCE" "$request_ref")
+fi
 sender="$(git_kernel config user.email)"
 timestamp=$(date +"%a %b %e %H:%M:%S %Y")
 output="git-pull-${tag}.mbox"
