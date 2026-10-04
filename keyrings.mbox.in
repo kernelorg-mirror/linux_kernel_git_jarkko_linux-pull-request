@@ -1,4 +1,4 @@
-From {{sender}} {{timestamp}}
+From {{sender_email}} {{timestamp}}
 From: {{sender}}
 X-Mailer: aerc
 To: Linus Torvalds <torvalds@linux-foundation.org>

@@ -97,7 +97,8 @@ else
 
   pull_request=$(git_kernel request-pull mainline/master "$SOURCE" "$request_ref")
 fi
-sender="$(git_kernel config user.email)"
+sender_email="$(git_kernel config user.email)"
+sender="$(git_kernel config user.name) <$sender_email>"
 timestamp=$(date +"%a %b %e %H:%M:%S %Y")
 output="git-pull-${tag}.mbox"
 tmp_output="$(mktemp "${output}.XXXXXX")"
@@ -110,10 +111,12 @@ jq \
   --arg version "$version" \
   --arg pull_request "$pull_request" \
   --arg sender "$sender" \
+  --arg sender_email "$sender_email" \
   --arg timestamp "$timestamp" \
   -rn '
     $template
     | gsub("{{sender}}"; $sender)
+    | gsub("{{sender_email}}"; $sender_email)
     | sub("{{timestamp}}"; $timestamp)
     | sub("{{tag}}"; $tag)
     | sub("{{version}}"; $version)
