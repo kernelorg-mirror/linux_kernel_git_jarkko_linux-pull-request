@@ -7,6 +7,6 @@ Cc: David Howells <dhowells@redhat.com>,
 	David S. Miller <davem@davemloft.net>,
 	keyrings@vger.kernel.org,
 	linux-integrity@vger.kernel.org
-Subject: [GIT PULL] KEYS: {{tag}}
+Subject: [GIT PULL] KEYS changes for {{version}}
 
 {{pull_request}}

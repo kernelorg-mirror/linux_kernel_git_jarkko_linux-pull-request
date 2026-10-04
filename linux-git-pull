@@ -107,6 +107,7 @@ trap 'rm -f "$tmp_output"' EXIT
 jq \
   --rawfile template "$template" \
   --arg tag "$tag" \
+  --arg version "$version" \
   --arg pull_request "$pull_request" \
   --arg sender "$sender" \
   --arg timestamp "$timestamp" \
@@ -115,6 +116,7 @@ jq \
     | gsub("{{sender}}"; $sender)
     | sub("{{timestamp}}"; $timestamp)
     | sub("{{tag}}"; $tag)
+    | sub("{{version}}"; $version)
     | sub("{{pull_request}}"; $pull_request)
   ' > "$tmp_output"
 

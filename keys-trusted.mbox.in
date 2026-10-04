@@ -7,6 +7,6 @@ Cc: David Howells <dhowells@redhat.com>,
 	keyrings@vger.kernel.org,
 	linux-integrity@vger.kernel.org,
 	linux-security-module@vger.kernel.org
-Subject: [GIT PULL] KEYS: trusted: {{tag}}
+Subject: [GIT PULL] KEYS: trusted changes for {{version}}
 
 {{pull_request}}
