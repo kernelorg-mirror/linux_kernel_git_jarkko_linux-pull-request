@@ -5,8 +5,12 @@ To: Linus Torvalds <torvalds@linux-foundation.org>
 Cc: David Howells <dhowells@redhat.com>,
 	Herbert Xu <herbert@gondor.apana.org.au>,
 	David S. Miller <davem@davemloft.net>,
+	James Bottomley <James.Bottomley@HansenPartnership.com>,
+	Mimi Zohar <zohar@linux.ibm.com>,
+	Eric Biggers <ebiggers@kernel.org>
 	keyrings@vger.kernel.org,
-	linux-integrity@vger.kernel.org
-Subject: [GIT PULL] KEYS changes for {{version}}
+	linux-integrity@vger.kernel.org,
+	linux-security-module@vger.kernel.org
+Subject: [GIT PULL] KEYS: changes for {{version}}
 
 {{pull_request}}
