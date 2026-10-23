@@ -14,6 +14,26 @@ git_kernel() {
   git -C "$kernel_tree" "$@"
 }
 
+render_template() {
+  jq \
+    --rawfile template "$template" \
+    --arg tag "$tag" \
+    --arg version "$version" \
+    --arg pull_request "$pull_request" \
+    --arg sender "$sender" \
+    --arg sender_email "$sender_email" \
+    --arg timestamp "$timestamp" \
+    -rn '
+      $template
+      | gsub("{{sender}}"; $sender)
+      | gsub("{{sender_email}}"; $sender_email)
+      | gsub("{{timestamp}}"; $timestamp)
+      | gsub("{{tag}}"; $tag)
+      | gsub("{{version}}"; $version)
+      | sub("{{pull_request}}"; $pull_request)
+    '
+}
+
 kernel_tree=
 dry_run=
 
@@ -76,6 +96,21 @@ if git_kernel ls-remote --exit-code --refs --tags origin "$tag_ref" >/dev/null 2
   exit 1
 fi
 
+sender_email="$(git_kernel config user.email)"
+sender="$(git_kernel config user.name) <$sender_email>"
+timestamp=$(date +"%a %b %e %H:%M:%S %Y")
+pull_request='{{pull_request}}'
+subject=$(render_template | jq -Rrs '
+  split("\n\n")[0]
+  | split("\n")[]
+  | select(startswith("Subject: "))
+  | ltrimstr("Subject: ")
+')
+if [[ -z "$subject" ]] || grep -Eq '\{\{[^}]+\}\}' <<< "$subject"; then
+  echo "\"$template\" has a missing or unresolved subject" >&2
+  exit 1
+fi
+
 if [[ -n "$dry_run" ]]; then
   request_ref="HEAD:$tag_ref"
   printf "Dry run: using '%s' as request-pull end ref\n" "$request_ref" >&2
@@ -85,7 +120,7 @@ if [[ -n "$dry_run" ]]; then
   fi
 else
   request_ref="$tag"
-  git_kernel tag -s "$tag"
+  git_kernel tag -s --edit -m "$subject" -m "Signed-off-by: $sender" "$tag"
   git_kernel push origin "$tag"
 
   printf "Waiting for '%s'" "$tag" >&2
@@ -97,31 +132,12 @@ else
 
   pull_request=$(git_kernel request-pull mainline/master "$SOURCE" "$request_ref")
 fi
-sender_email="$(git_kernel config user.email)"
-sender="$(git_kernel config user.name) <$sender_email>"
-timestamp=$(date +"%a %b %e %H:%M:%S %Y")
 output="git-pull-${tag}.mbox"
 tmp_output="$(mktemp "${output}.XXXXXX")"
 
 trap 'rm -f "$tmp_output"' EXIT
 
-jq \
-  --rawfile template "$template" \
-  --arg tag "$tag" \
-  --arg version "$version" \
-  --arg pull_request "$pull_request" \
-  --arg sender "$sender" \
-  --arg sender_email "$sender_email" \
-  --arg timestamp "$timestamp" \
-  -rn '
-    $template
-    | gsub("{{sender}}"; $sender)
-    | gsub("{{sender_email}}"; $sender_email)
-    | sub("{{timestamp}}"; $timestamp)
-    | sub("{{tag}}"; $tag)
-    | sub("{{version}}"; $version)
-    | sub("{{pull_request}}"; $pull_request)
-  ' > "$tmp_output"
+render_template > "$tmp_output"
 
 if grep -Eq '\{\{[^}]+\}\}' "$tmp_output"; then
   echo "\"$template\" contains unresolved placeholders" >&2
