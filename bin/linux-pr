@@ -7,7 +7,7 @@ set -e
 SOURCE="git://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd.git"
 
 usage() {
-  echo "Usage: $0 [-n|--dry-run] [-C <linux kernel tree>] <tag prefix> <version> <mustache template>"
+  echo "Usage: $0 [-n|--dry-run] [-C <linux kernel tree>] [--postfix <postfix>] <tag prefix> <version> <mustache template>"
 }
 
 git_kernel() {
@@ -36,6 +36,7 @@ render_template() {
 
 kernel_tree=.
 dry_run=
+postfix=
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -49,6 +50,14 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       kernel_tree="$2"
+      shift 2
+      ;;
+    --postfix)
+      if [[ $# -lt 2 || -z "$2" ]]; then
+        usage >&2
+        exit 1
+      fi
+      postfix="$2"
       shift 2
       ;;
     -h|--help)
@@ -84,15 +93,16 @@ tag_prefix="$1"
 version="$2"
 template="$3"
 tag="${tag_prefix}-${version}"
-tag_ref="refs/tags/$tag"
+git_tag="${tag}${postfix:+-$postfix}"
+tag_ref="refs/tags/$git_tag"
 
 if git_kernel show-ref --verify --quiet "$tag_ref"; then
-  echo "\"$tag\" pre-exists"
+  echo "\"$git_tag\" pre-exists"
   exit 1
 fi
 
 if git_kernel ls-remote --exit-code --refs --tags origin "$tag_ref" >/dev/null 2>&1; then
-  echo "\"origin/$tag\" pre-exists"
+  echo "\"origin/$git_tag\" pre-exists"
   exit 1
 fi
 
@@ -119,11 +129,11 @@ if [[ -n "$dry_run" ]]; then
     git_kernel request-pull mainline/master "$SOURCE" "$request_ref" >/dev/null
   fi
 else
-  request_ref="$tag"
-  git_kernel tag -s --edit -m "$subject" -m "Signed-off-by: $sender" "$tag"
-  git_kernel push origin "$tag"
+  request_ref="$git_tag"
+  git_kernel tag -s --edit -m "$subject" -m "Signed-off-by: $sender" "$git_tag"
+  git_kernel push origin "$git_tag"
 
-  printf "Waiting for '%s'" "$tag" >&2
+  printf "Waiting for '%s'" "$git_tag" >&2
   while ! git ls-remote --exit-code --refs --tags "$SOURCE" "$tag_ref" >/dev/null 2>&1; do
     printf "." >&2
     sleep 1
