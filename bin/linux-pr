@@ -8,7 +8,7 @@ SOURCE="git://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd.git"
 TEMPLATE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/linux-pr"
 
 usage() {
-  echo "Usage: $0 [-n|--dry-run] [-C <linux kernel tree>] [--postfix <postfix>] [--data-dir <data dir>] <tag prefix> <version> <template name>"
+  echo "Usage: $0 [-n|--dry-run] [-C <linux kernel tree>] [--postfix <postfix>] [--data-dir <data dir>] <template name> <version>"
 }
 
 git_kernel() {
@@ -89,7 +89,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$kernel_tree" || $# -ne 3 ]]; then
+if [[ -z "$kernel_tree" || $# -ne 2 ]]; then
   usage >&2
   exit 1
 fi
@@ -99,9 +99,8 @@ if ! git -C "$kernel_tree" rev-parse --show-toplevel >/dev/null 2>&1; then
   exit 1
 fi
 
-tag_prefix="$1"
+template_name="$1"
 version="$2"
-template_name="$3"
 if [[ -z "$template_name" || "$template_name" == */* ]]; then
   echo "Invalid template name: \"$template_name\"" >&2
   exit 1
@@ -111,7 +110,7 @@ if [[ ! -f "$template" || ! -r "$template" ]]; then
   echo "Template \"$template_name\" not found or unreadable: $template" >&2
   exit 1
 fi
-tag="${tag_prefix}-${version}"
+tag="${template_name}-${version}"
 git_tag="${tag}${postfix:+-$postfix}"
 tag_ref="refs/tags/$git_tag"
 
