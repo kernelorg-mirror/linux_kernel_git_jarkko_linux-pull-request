@@ -5,9 +5,10 @@
 set -e
 
 SOURCE="git://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd.git"
+TEMPLATE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/linux-pr"
 
 usage() {
-  echo "Usage: $0 [-n|--dry-run] [-C <linux kernel tree>] [--postfix <postfix>] <tag prefix> <version> <mustache template>"
+  echo "Usage: $0 [-n|--dry-run] [-C <linux kernel tree>] [--postfix <postfix>] <tag prefix> <version> <template name>"
 }
 
 git_kernel() {
@@ -91,7 +92,16 @@ fi
 
 tag_prefix="$1"
 version="$2"
-template="$3"
+template_name="$3"
+if [[ -z "$template_name" || "$template_name" == */* ]]; then
+  echo "Invalid template name: \"$template_name\"" >&2
+  exit 1
+fi
+template="$TEMPLATE_DIR/$template_name.mbox.in"
+if [[ ! -f "$template" || ! -r "$template" ]]; then
+  echo "Template \"$template_name\" not found or unreadable: $template" >&2
+  exit 1
+fi
 tag="${tag_prefix}-${version}"
 git_tag="${tag}${postfix:+-$postfix}"
 tag_ref="refs/tags/$git_tag"
