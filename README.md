@@ -13,3 +13,9 @@ linux-pr -n -C ~/work/linux tpmdd v7.4-rc1 linux-tpmdd
 
 The available names are `keyrings` and `linux-tpmdd`. Lookup defaults to the
 installed template directory, with no current-directory or checkout fallback.
+Use `--data-dir <dir>` to select another template directory explicitly. For
+example, when testing from this checkout:
+
+```sh
+bin/linux-pr -n --data-dir ./data -C ~/work/linux tpmdd v7.4-rc1 linux-tpmdd
+```

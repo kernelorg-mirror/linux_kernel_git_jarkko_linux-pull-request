@@ -8,7 +8,7 @@ SOURCE="git://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd.git"
 TEMPLATE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/linux-pr"
 
 usage() {
-  echo "Usage: $0 [-n|--dry-run] [-C <linux kernel tree>] [--postfix <postfix>] <tag prefix> <version> <template name>"
+  echo "Usage: $0 [-n|--dry-run] [-C <linux kernel tree>] [--postfix <postfix>] [--data-dir <data dir>] <tag prefix> <version> <template name>"
 }
 
 git_kernel() {
@@ -38,6 +38,7 @@ render_template() {
 kernel_tree=.
 dry_run=
 postfix=
+data_dir="$TEMPLATE_DIR"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -59,6 +60,14 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       postfix="$2"
+      shift 2
+      ;;
+    --data-dir)
+      if [[ $# -lt 2 || -z "$2" ]]; then
+        usage >&2
+        exit 1
+      fi
+      data_dir="$2"
       shift 2
       ;;
     -h|--help)
@@ -97,7 +106,7 @@ if [[ -z "$template_name" || "$template_name" == */* ]]; then
   echo "Invalid template name: \"$template_name\"" >&2
   exit 1
 fi
-template="$TEMPLATE_DIR/$template_name.mbox.in"
+template="$data_dir/$template_name.mbox.in"
 if [[ ! -f "$template" || ! -r "$template" ]]; then
   echo "Template \"$template_name\" not found or unreadable: $template" >&2
   exit 1
