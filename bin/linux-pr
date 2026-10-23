@@ -7,7 +7,7 @@ set -e
 SOURCE="git://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd.git"
 
 usage() {
-  echo "Usage: $0 [-n|--dry-run] -C <linux kernel tree> <tag prefix> <version> <mustache template>"
+  echo "Usage: $0 [-n|--dry-run] [-C <linux kernel tree>] <tag prefix> <version> <mustache template>"
 }
 
 git_kernel() {
@@ -34,7 +34,7 @@ render_template() {
     '
 }
 
-kernel_tree=
+kernel_tree=.
 dry_run=
 
 while [[ $# -gt 0 ]]; do
